@@ -10,19 +10,16 @@ def expand_enviroment_variables(text):
 
 def process_command(command, arguments):
     if command == "ls":
-        terminal.insert("end", "\n[ls] Comando provisional ejecutado")
+        terminal.insert(
+            "end",
+            f"\nComando: ls\nArgumentos: {arguments}"
+        )
 
     elif command == "cd":
-        if arguments:
-            terminal.insert(
-                "end",
-                f"\n[cd] Directorio recibido: {arguments[0]}"
-            )
-        else:
-            terminal.insert(
-                "end",
-                "\n[cd] Error: cd necesita un directorio"
-            )
+        terminal.insert(
+            "end",
+            f"\nComando: cd\nArgumentos: {arguments}"
+        )
 
     elif command == "exit":
         root.destroy()
@@ -31,7 +28,7 @@ def process_command(command, arguments):
     else:
         terminal.insert(
             "end",
-            f"\nError: Comando desconocido '{command}'"
+            f"\nError: comando desconocido: {command}"
         )
 
     return True
