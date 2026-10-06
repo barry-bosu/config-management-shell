@@ -2,15 +2,16 @@ import tkinter as tk
 import os
 import argparse
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Graphical Shell Emulator -Variant 2"
-        )
-    
+        description="Graphical Shell Emulator - Variant 2"
+    )
+
     parser.add_argument(
-        "--vfs", 
-        required=True, 
-        help="Phisical path to the virtual file system (VFS) directory"
+        "--vfs",
+        required=True,
+        help="Physical path to the virtual file system (VFS) directory"
     )
 
     parser.add_argument(
@@ -21,30 +22,28 @@ def parse_arguments():
 
     return parser.parse_args()
 
-args = parse_arguments()
-VFS_PATH = os.path.abspath(args.vfs)
-SCRIPT_PATH = os.path.abspath(args.script)
-VFS_NAME = os.path.basename(VFS_PATH)
 
-def validate_configuration():
-    if not os.path.isdir(VFS_PATH):
+def validate_configuration(vfs_path, script_path):
+    if not os.path.isdir(vfs_path):
         raise ValueError(
-            f"VFS directory does not exist: {VFS_PATH}")
+            f"VFS directory does not exist: {vfs_path}"
+        )
 
-    if not os.path.isfile(SCRIPT_PATH):
+    if not os.path.isfile(script_path):
         raise ValueError(
-            f"Startup script does not exist: {SCRIPT_PATH}")
+            f"Startup script does not exist: {script_path}"
+        )
 
-validate_configuration()
 
 os.environ.setdefault("HOME", os.path.expanduser("~"))
+
 
 def expand_environment_variables(text):
     return os.path.expandvars(text)
 
+
 def process_command(command_line):
     command_line = expand_environment_variables(command_line)
-
     parts = command_line.split()
 
     if not parts:
@@ -56,21 +55,14 @@ def process_command(command_line):
     if command == "ls":
         terminal.insert(
             "end",
-            "\n[ls] Comando provisional ejecutado."
+            f"\nComando: ls\nArgumentos: {arguments}"
         )
 
     elif command == "cd":
-        if arguments:
-            terminal.insert(
-                "end",
-                f"\n[cd] Directorio recibido: {arguments[0]}"
-            )
-        else:
-            terminal.insert(
-                "end",
-                "\nError: cd necesita un directorio."
-            )
-            return False
+        terminal.insert(
+            "end",
+            f"\nComando: cd\nArgumentos: {arguments}"
+        )
 
     elif command == "exit":
         root.destroy()
@@ -95,7 +87,7 @@ def execute_command(event):
     if command_line.startswith(">"):
         command_line = command_line[1:].strip()
 
-    success = process_command(command_line)
+    process_command(command_line)
 
     if root.winfo_exists():
         terminal.insert("end", "\n> ")
@@ -103,8 +95,9 @@ def execute_command(event):
 
     return "break"
 
-def run_startup_script():
-    with open(SCRIPT_PATH, "r", encoding="utf-8") as script:
+
+def run_startup_script(script_path):
+    with open(script_path, "r", encoding="utf-8") as script:
         for line in script:
             command_line = line.strip()
 
@@ -128,27 +121,58 @@ def run_startup_script():
     terminal.see("end")
 
 
-root = tk.Tk()
-root.title(f"Graphical Shell Emulator - VFS: {VFS_NAME}")
+def create_interface(vfs_path, script_path):
+    global root, terminal
 
-root.geometry("800x500")
+    vfs_name = os.path.basename(vfs_path)
 
-terminal = tk.Text(
-    root, 
-    bg="black", 
-    fg="white", 
-    insertbackground="white",
-    font=("Courier", 12)
-)
-terminal.pack(
-    fill="both", 
-    expand=True,
-    padx=10,
-    pady=10
+    root = tk.Tk()
+    root.title(f"Graphical Shell Emulator - VFS: {vfs_name}")
+    root.geometry("800x500")
+
+    terminal = tk.Text(
+        root, bg="black", fg="white",
+        insertbackground="white", font=("Courier", 12)
     )
 
-terminal.bind("<Return>", execute_command)
-terminal.focus_set()
-root.after(100, run_startup_script)
+    terminal.pack(
+        fill="both", expand=True,
+        padx=10, pady=10
+    )
 
-root.mainloop()
+    terminal.bind("<Return>", execute_command)
+    terminal.focus_set()
+
+    terminal.insert(
+        "end",
+        f"[DEBUG] VFS path: {vfs_path}\n"
+        f"[DEBUG] Startup script: {script_path}\n\n"
+    )
+
+    root.after(
+        100,
+        lambda: run_startup_script(script_path)
+    )
+
+    root.mainloop()
+
+
+def main():
+    args = parse_arguments()
+
+    vfs_path = os.path.abspath(args.vfs)
+    script_path = os.path.abspath(args.script)
+
+    validate_configuration(
+        vfs_path,
+        script_path
+    )
+
+    create_interface(
+        vfs_path,
+        script_path
+    )
+
+
+if __name__ == "__main__":
+    main()
